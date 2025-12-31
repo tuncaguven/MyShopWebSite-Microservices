@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order
+  namespace: myshop
+  labels:
+    app: order
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+        - name: order
+          image: tuncaguvenbilgi/myshop-order:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:80"
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: myshop-secrets
+                  key: order-connection-string
+            - name: IdentityServerUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: IDENTITYSERVER_URL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: myshop
+spec:
+  selector:
+    app: order
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP   

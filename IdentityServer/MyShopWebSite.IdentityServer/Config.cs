@@ -62,11 +62,15 @@ namespace MyShopWebSite.IdentityServer
                 {
                     "CatalogFullPermission",
                     "CatalogReadPermission",
-                        IdentityServerConstants.LocalApi.ScopeName,
+                    "DiscountFullPermission",
+                    "OrderFullPermission",
+                    "BasketFullPermission",
+                    IdentityServerConstants.LocalApi.ScopeName,
                     IdentityServerConstants.StandardScopes.Email,
                     IdentityServerConstants.StandardScopes.OpenId,
                     IdentityServerConstants.StandardScopes.Profile
-                }
+                },
+                AccessTokenLifetime = 3600
             },
 
             // Admin - Client Credentials for MVC BFF (backend-to-backend)
@@ -74,7 +78,7 @@ namespace MyShopWebSite.IdentityServer
             {
                 ClientId = "MyShopWebSiteAdminId",
                 ClientName = "MultiShop Admin Client",
-                AllowedGrantTypes = GrantTypes.ClientCredentials,  // ⭐ CHANGED from ResourceOwnerPassword
+                AllowedGrantTypes = GrantTypes.ClientCredentials,
                 ClientSecrets = { new Secret("myshopwebsitesecret".Sha256()) },
                 AllowedScopes =
                 {
@@ -85,7 +89,40 @@ namespace MyShopWebSite.IdentityServer
                     "BasketFullPermission",
                     IdentityServerConstants.LocalApi.ScopeName
                 },
-                AccessTokenLifetime = 3600  // 1 hour
+                AccessTokenLifetime = 3600
+            },
+
+            // MVC Client - Authorization Code + PKCE for interactive user login
+            new Client
+            {
+                ClientId = "MultiShopMvcClient",
+                ClientName = "MultiShop MVC Web Application",
+                AllowedGrantTypes = GrantTypes.Code,
+                RequirePkce = true,
+                RequireClientSecret = true,
+                ClientSecrets = { new Secret("multishopmvcsecret".Sha256()) },
+                
+                RedirectUris = { "https://localhost:5002/signin-oidc" },
+                PostLogoutRedirectUris = { "https://localhost:5002/signout-callback-oidc" },
+                FrontChannelLogoutUri = "https://localhost:5002/signout-oidc",
+                
+                AllowedScopes =
+                {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    IdentityServerConstants.StandardScopes.Email,
+                    "CatalogFullPermission",
+                    "CatalogReadPermission",
+                    "DiscountFullPermission",
+                    "OrderFullPermission",
+                    "BasketFullPermission"
+                },
+                
+                AllowOfflineAccess = true,
+                AccessTokenLifetime = 3600,
+                RefreshTokenUsage = TokenUsage.ReUse,
+                RefreshTokenExpiration = TokenExpiration.Sliding,
+                SlidingRefreshTokenLifetime = 86400
             }
         };
     }

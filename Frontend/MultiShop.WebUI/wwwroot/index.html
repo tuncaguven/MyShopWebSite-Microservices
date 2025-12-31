@@ -1450,17 +1450,17 @@
                 <h2 class="auth-title">GİRİŞ YAP</h2>
                 <form class="auth-form" onsubmit="handleLogin(event)">
                     <div class="form-group">
-                        <label>E-POSTA</label>
-                        <input type="email" class="form-control" required>
+                        <label>KULLANICI ADI</label>
+                        <input type="text" name="username" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>ŞİFRE</label>
-                        <input type="password" class="form-control" required>
+                        <input type="password" name="password" class="form-control" required>
                     </div>
                     <button type="submit" class="auth-submit">GİRİŞ YAP</button>
                 </form>
                 <div class="auth-link">
-                    Hesabınız yok mu? <a href="#" onclick="showPage('register')">Kayıt Ol</a>
+                    Hesabınız yok mu? Postman'den kayıt olun
                 </div>
                 <div class="social-login">
                     <button class="social-btn">Shop ile giriş yapın</button>

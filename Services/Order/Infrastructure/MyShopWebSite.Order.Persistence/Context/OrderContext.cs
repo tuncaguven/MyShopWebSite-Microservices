@@ -13,7 +13,7 @@ namespace MyShopWebSite.Order.Persistence.Context
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(
-             "Server=localhost,1440;Database=MyShopWebSiteOrderDb;User Id=sa;Password=At001177.;TrustServerCertificate=True;Encrypt=True;");
+    "Server=localhost,1434;Database=OrderDb;User Id=sa;Password=YourStrong@Pass123;TrustServerCertificate=True;");
 
         }
 

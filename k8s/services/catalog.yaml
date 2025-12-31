@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog
+  namespace: myshop
+  labels:
+    app: catalog
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: catalog
+  template:
+    metadata:
+      labels:
+        app: catalog
+    spec:
+      containers:
+        - name: catalog
+          image: tuncaguvenbilgi/myshop-catalog:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:80"
+            - name: DatabaseSettings__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: MONGO_CONNECTION
+            - name: DatabaseSettings__DatabaseName
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: MONGO_DATABASE
+            - name: IdentityServerUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: IDENTITYSERVER_URL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-service
+  namespace: myshop
+spec:
+  selector:
+    app: catalog
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP   

@@ -1,6 +1,6 @@
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using MultiShop.WebUI.Models;
 using MultiShop.WebUI.Services;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +16,14 @@ builder.Services.Configure<ServiceUrlConfiguration>(
 // Add memory cache for token caching
 builder.Services.AddMemoryCache();
 
+// Add HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
 // Register HttpClient for TokenService
 builder.Services.AddHttpClient<ITokenService, TokenService>();
+
+// Register CatalogApiClient as typed HttpClient
+builder.Services.AddHttpClient<ICatalogApiClient, CatalogApiClient>();
 
 // Register HttpClientFactory for API calls
 builder.Services.AddHttpClient();
@@ -50,9 +56,7 @@ app.UseRouting();
 
 app.UseCors("AllowFrontend");
 
-app.UseAuthorization();
-
-// Serve index.html as default - UPDATE THIS
+// Serve index.html as default (static frontend)
 app.MapGet("/", async context =>
 {
     var indexPath = Path.Combine(app.Environment.WebRootPath, "index.html");
@@ -68,6 +72,7 @@ app.MapGet("/", async context =>
     }
 });
 
+// Map API controllers
 app.MapControllers();
 
 app.Run();

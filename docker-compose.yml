@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # Databases
+  identitydb:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Pass123
+    ports:
+      - "14331:1433"
+    networks:
+      - multishop-net
+
+  orderdb:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Pass123
+    ports:
+      - "1434:1433"
+    networks:
+      - multishop-net
+
+  catalogdb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - multishop-net
+
+  basketdb:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - multishop-net
+
+  # Microservices
+  identityserver:
+    build:
+      context: .
+      dockerfile: IdentityServer/MyShopWebSite.IdentityServer/Dockerfile
+    ports:
+      - "5001:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=identitydb;Database=IdentityDb;User Id=sa;Password=YourStrong@Pass123;TrustServerCertificate=True;
+    depends_on:
+      - identitydb
+    networks:
+      - multishop-net
+
+  catalog:
+    build:
+      context: .
+      dockerfile: Services/Catalog/MyShopWebSite.Catalog/Dockerfile
+    ports:
+      - "7068:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - DatabaseSettings__ConnectionString=mongodb://catalogdb:27017
+      - IdentityServerUrl=http://identityserver:80
+    depends_on:
+      - catalogdb
+      - identityserver
+    networks:
+      - multishop-net
+
+  basket:
+    build:
+      context: .
+      dockerfile: Services/Basket/MyShopWebSite.Basket/Dockerfile
+    ports:
+      - "7077:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RedisSettings__Host=basketdb
+      - RedisSettings__Port=6379
+      - IdentityServerUrl=http://identityserver:80
+    depends_on:
+      - basketdb
+      - identityserver
+    networks:
+      - multishop-net
+
+  order:
+    build:
+      context: .
+      dockerfile: Services/Order/Presentation/MyShopWebSite.Order.WebApi/Dockerfile
+    ports:
+      - "7129:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=orderdb;Database=OrderDb;User Id=sa;Password=YourStrong@Pass123;TrustServerCertificate=True;
+      - IdentityServerUrl=http://identityserver:80
+    depends_on:
+      - orderdb
+      - identityserver
+    networks:
+      - multishop-net
+
+  discount:
+    build:
+      context: .
+      dockerfile: Services/Discount/MyShopWebSite.Discount/Dockerfile
+    ports:
+      - "7286:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=orderdb;Database=DiscountDb;User Id=sa;Password=YourStrong@Pass123;TrustServerCertificate=True;
+      - IdentityServerUrl=http://identityserver:80
+    depends_on:
+      - orderdb
+      - identityserver
+    networks:
+      - multishop-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Frontend/MultiShop.WebUI/Dockerfile
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - IdentityServer__Authority=http://identityserver:80
+      - IdentityServer__TokenUrl=http://identityserver:80/connect/token
+      - ServiceUrls__Catalog=http://catalog:80
+      - ServiceUrls__Basket=http://basket:80
+      - ServiceUrls__Order=http://order:80
+      - ServiceUrls__Discount=http://discount:80
+    depends_on:
+      - identityserver
+      - catalog
+      - basket
+      - order
+      - discount
+    networks:
+      - multishop-net
+    volumes:
+      - ./Frontend/MultiShop.WebUI/appsettings.Development.json:/app/appsettings.Development.json
+
+networks:
+  multishop-net:
+    driver: bridge

@@ -7,6 +7,9 @@ namespace MultiShop.WebUI.Models
         public string ClientId { get; set; } = string.Empty;
         public string ClientSecret { get; set; } = string.Empty;
         public string Scopes { get; set; } = string.Empty;
+        public string UserClientId { get; set; } = string.Empty;
+        public string UserClientSecret { get; set; } = string.Empty;
+        public string UserScopes { get; set; } = string.Empty;
     }
 
     public class ServiceUrlConfiguration

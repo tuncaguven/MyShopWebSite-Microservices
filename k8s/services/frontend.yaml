@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: myshop
+  labels:
+    app: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: tuncaguvenbilgi/myshop-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:80"
+            - name: IdentityServer__Authority
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: IDENTITYSERVER_URL
+            - name: IdentityServer__TokenUrl
+              value: "http://identityserver-service/connect/token"
+            - name: IdentityServer__ClientId
+              value: "MyShopWebSiteAdminId"
+            - name: IdentityServer__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: myshop-secrets
+                  key: identity-client-secret
+            - name: IdentityServer__Scopes
+              value: "CatalogFullPermission CatalogReadPermission DiscountFullPermission OrderFullPermission BasketFullPermission"
+            - name: ServiceUrls__Catalog
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: CATALOG_URL
+            - name: ServiceUrls__Basket
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: BASKET_URL
+            - name: ServiceUrls__Order
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: ORDER_URL
+            - name: ServiceUrls__Discount
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: DISCOUNT_URL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: myshop
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer        

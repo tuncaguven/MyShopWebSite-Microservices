@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: basket
+  namespace: myshop
+  labels:
+    app: basket
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: basket
+  template:
+    metadata:
+      labels:
+        app: basket
+    spec:
+      containers:
+        - name: basket
+          image: tuncaguvenbilgi/myshop-basket:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:80"
+            - name: RedisSettings__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: REDIS_HOST
+            - name: RedisSettings__Port
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: REDIS_PORT
+            - name: IdentityServerUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: myshop-config
+                  key: IDENTITYSERVER_URL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: basket-service
+  namespace: myshop
+spec:
+  selector:
+    app: basket
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP       
